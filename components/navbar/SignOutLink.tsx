@@ -3,7 +3,7 @@
 import React from "react";
 
 import { SignOutButton } from "@clerk/nextjs";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 function SignOutLink() {
   const { toast } = useToast();
