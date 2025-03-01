@@ -2,7 +2,6 @@
 
 import {
   imageSchema,
-  imageSchmea,
   profileSchema,
   propertySchema,
   validateWithZodSchema,
@@ -29,8 +28,19 @@ const renderError = (error: unknown): { message: string } => {
   };
 };
 
+// Add type for the prevState in all actions
+interface ActionState {
+  message: string;
+}
+
+interface FavoriteActionState {
+  propertyId: string;
+  favoriteId: string | null;
+  pathname: string;
+}
+
 export const createProfileAction = async (
-  prevState: any,
+  prevState: ActionState,
   formData: FormData
 ) => {
   try {
@@ -86,9 +96,9 @@ export const fetchProfile = async () => {
 };
 
 export const updateProfileAction = async (
-  prevState: any,
+  prevState: ActionState,
   formData: FormData
-): Promise<{ message: string }> => {
+): Promise<ActionState> => {
   const user = await getAuthUser();
 
   try {
@@ -109,9 +119,9 @@ export const updateProfileAction = async (
 };
 
 export const updateProfileImageAction = async (
-  prevState: any,
+  prevState: ActionState,
   formData: FormData
-): Promise<{ message: string }> => {
+): Promise<ActionState> => {
   const user = await getAuthUser();
   try {
     const image = formData.get("image") as File;
@@ -134,9 +144,9 @@ export const updateProfileImageAction = async (
 };
 
 export const createPropertyAction = async (
-  prevState: any,
+  prevState: ActionState,
   formData: FormData
-): Promise<{ message: string }> => {
+): Promise<ActionState> => {
   const user = await getAuthUser();
 
   try {
@@ -235,4 +245,49 @@ export const toggleFavoriteAction = async (prevState: {
   } catch (error) {
     return renderError(error);
   }
+};
+
+// Add type for the favorite parameter
+interface FavoriteWithProperty {
+  property: {
+    id: string;
+    name: string;
+    tagline: string;
+    country: string;
+    price: number;
+    image: string;
+  };
+}
+
+export const fetchFavorites = async () => {
+  const user = await getAuthUser();
+  const favorites = await db.favorite.findMany({
+    where: {
+      profileId: user.id,
+    },
+    select: {
+      property: {
+        select: {
+          id: true,
+          name: true,
+          tagline: true,
+          country: true,
+          price: true,
+          image: true,
+        },
+      },
+    },
+  });
+  return favorites.map((favorite: FavoriteWithProperty) => favorite.property);
+};
+
+export const fetchPropertyDetails = async (id: string) => {
+  return db.property.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      profile: true,
+    },
+  });
 };
