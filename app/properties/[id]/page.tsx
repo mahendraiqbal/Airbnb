@@ -12,16 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { redirect } from "next/navigation";
 import React from "react";
 import Amenities from "@/components/properties/Amenities";
-import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
-
-const DynamicMap = dynamic(
-  () => import("@/components/properties/PropertyMap"),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="h-[400px] w-full" />,
-  }
-);
+import DynamicMap from "@/components/properties/DynamicMap";
 
 async function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const property = await fetchPropertyDetails(params.id);
