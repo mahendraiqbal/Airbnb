@@ -18,13 +18,7 @@ import {
 
 import React from "react";
 
-function ShareButton({
-  propertyId,
-  name,
-}: {
-  propertyId: string;
-  name: string;
-}) {
+function ShareButton({ name }: { propertyId: string; name: string }) {
   const url = process.env.NEXT_PUBLIC_WEBSITE_URL;
   const shareLink = `${url}/properties/%{propertyId}`;
   return (
