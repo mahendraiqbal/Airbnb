@@ -1,20 +1,38 @@
 import FavoriteToogleButton from "@/components/card/FavoriteToogleButton";
 import PropertyRating from "@/components/card/PropertyRating";
-import BookingCalendar from "@/components/properties/BookingCalendar";
 import BreadCrumbs from "@/components/properties/BreadCrumbs";
 import Description from "@/components/properties/Description";
 import ImageContainer from "@/components/properties/ImageContainer";
 import PropertyDetails from "@/components/properties/PropertyDetails";
 import ShareButton from "@/components/properties/ShareButton";
 import UserInfo from "@/components/properties/UserInfo";
-import { fetchPropertyDetails } from "@/utils/actions";
+import { fetchPropertyDetails, findExistingReview } from "@/utils/actions";
 import { Separator } from "@/components/ui/separator";
 import { redirect } from "next/navigation";
 import React from "react";
 import Amenities from "@/components/properties/Amenities";
-import DynamicMap from "@/components/properties/DynamicMap";
+import dynamic from "next/dynamic";
+// import DynamicMap from "@/components/properties/DynamicMap";
 import SubmitReview from "@/components/reviews/SubmitReview";
 import PropertyReviews from "@/components/reviews/PropertyReviews";
+import { auth } from "@clerk/nextjs/server";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const DynamicMap = dynamic(
+  () => import("@/components/properties/PropertyMap"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400] w-full" />,
+  }
+);
+
+const DynamicBookingWrapper = dynamic(
+  () => import("@/components/booking/BookingWrapper"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[200] w-full" />,
+  }
+);
 
 async function PropertyDetailsPage({ params }: { params: { id: string } }) {
   const property = await fetchPropertyDetails(params.id);
@@ -31,6 +49,11 @@ async function PropertyDetailsPage({ params }: { params: { id: string } }) {
 
   const firstName = property.profile.firstName;
   const profileImage = property.profile.profileImage;
+
+  const { userId } = auth();
+  const isNotOwner = property.profile.clerkId !== userId;
+  const reviewDoesNotExist =
+    userId && isNotOwner && !(await findExistingReview(userId, property.id));
 
   return (
     <section>
@@ -57,10 +80,14 @@ async function PropertyDetailsPage({ params }: { params: { id: string } }) {
           <DynamicMap countryCode={property.country} />
         </div>
         <div className="lg:col-span-4 flex flex-col items-center">
-          <BookingCalendar />
+          <DynamicBookingWrapper
+            propertyId={property.id}
+            price={property.price}
+            bookings={property.bookings}
+          />
         </div>
       </section>
-      <SubmitReview propertyId={property.id} />
+      {reviewDoesNotExist && <SubmitReview propertyId={property.id} />}
       <PropertyReviews propertyId={property.id} />
     </section>
   );
